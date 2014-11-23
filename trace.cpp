@@ -44,11 +44,38 @@ extern int step_max;
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
-RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph) {
-//
-// do your thing here
-//
-	RGB_float color;
+RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph) 
+{
+  Vector lightVector = get_vec(q,light1);
+  normalize(&lightVector);
+  Vector viewerVector = get_vec(q,eye_pos);
+  Vector reflectedVector = (vec_scale(surf_norm,vec_dot(lightVector,surf_norm)));
+  reflectedVector = vec_scale(reflectedVector,2);
+  reflectedVector = vec_minus(reflectedVector,lightVector);
+  RGB_float color;
+
+  float distance = vec_len(v);
+  float decay = decay_a + decay_b * distance + decay_c * pow(distance,2);
+
+  float dot1 = vec_dot(lightVector,surf_norm);
+  float dot2 = vec_dot(reflectedVector,viewerVector);
+
+  float globalAmbientComponent[3];
+  float ambientComponent[3];
+  float diffuseComponent[3];
+  float specularComponent[3];
+
+  for(int i = 0; i < 3; i++)
+  {
+    globalAmbientComponent[i] = global_ambient[i] * sph->reflectance;
+    ambientComponent[i] = light1_ambient[i]*sph->mat_ambient[i];
+    diffuseComponent[i] = dot1*light1_ambient[i]*sph->mat_ambient[i];
+    specularComponent[i] = pow(dot2,sph->mat_shineness)*light1_diffuse[i]*sph->mat_diffuse[i];
+  }
+
+  color.r = global_ambient[0] + ambientComponent[0] + (1/decay) * (diffuseComponent[0] + specularComponent[0]);
+  color.g = global_ambient[1] + ambientComponent[1] + (1/decay) * (diffuseComponent[1] + specularComponent[1]);
+  color.b = global_ambient[2] + ambientComponent[2] + (1/decay) * (diffuseComponent[2] + specularComponent[2]);
 	return color;
 }
 
@@ -64,7 +91,7 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
 
   sph = intersect_scene(o,u,scene,&hit,0);
   if(sph == NULL) color = background_clr; 
-  else color = phong(o,u,sphere_normal(hit,sph),sph);
+  else color = phong(hit,u,sphere_normal(hit,sph),sph);
   return color;
 }
 
