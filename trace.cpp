@@ -90,6 +90,11 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   //cout<<"GREEN:"<<color.g<<endl;
   //cout<<"BLUE"<<color.b<<endl;
 
+  if(shadow_on)
+  {
+    //Do magical shadow calculations here
+  }
+
   return color;
 }
 
