@@ -83,16 +83,19 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
         hit->y = tempHit.y;
         hit->z = tempHit.z;
         closestDistance = distance2;
-        cout << "REACHED" << endl;
+        //cout << "REACHED" << endl;
       }
     }
     if(closestDistance == -1.0)
     {
       closestDistance = distance2;
       closestSphere = sph->next;
-      hit->x = tempHit.x;
-      hit->y = tempHit.y;
-      hit->z = tempHit.z;
+      if(closestDistance > 0.0)
+      {
+        hit->x = tempHit.x;
+        hit->y = tempHit.y;
+        hit->z = tempHit.z; 
+      }
     }
 
     sph = sph->next;

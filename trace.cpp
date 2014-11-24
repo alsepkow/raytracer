@@ -47,38 +47,43 @@ extern int step_max;
  *********************************************************************/
 RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph) 
 {
+  RGB_float color;
+  normalize(&surf_norm);
+
   Vector lightVector = get_vec(q,light1);
-  normalize(&v);
-  Vector viewerVector = vec_scale(v,-1);//get_vec(q,eye_pos);
   float distance = vec_len(lightVector);
   normalize(&lightVector);
-  Vector reflectedVector = (vec_scale(surf_norm,2*vec_dot(lightVector,surf_norm)));
-  reflectedVector = vec_minus(reflectedVector,lightVector);
-  normalize(&reflectedVector);
-  RGB_float color;
 
-  //cout << distance << endl;
-  float decay = decay_a + decay_b * distance + decay_c * distance * distance;
+  normalize(&v);
+  Vector viewerVector = vec_scale(v,-1);//get_vec(q,eye_pos);
+  normalize(&viewerVector);
+
+  Vector reflectedVector = (vec_scale(surf_norm,-2.0*vec_dot(lightVector,surf_norm)));
+  reflectedVector = vec_plus(reflectedVector,lightVector);
+  normalize(&reflectedVector);
 
   float dot1 = max(0.0f,vec_dot(lightVector,surf_norm));
   float dot2 = max(0.0f,float(vec_dot(reflectedVector,v)));
 
-  float globalAmbientComponent[3];
+  //cout << distance << endl;
+  float decay = decay_a + decay_b * distance + decay_c * distance * distance;
+
   float ambientComponent[3];
   float diffuseComponent[3];
   float specularComponent[3];
+  float shininess = sph->mat_shineness;
 
   for(int i = 0; i < 3; i++)
   {
-    globalAmbientComponent[i] = global_ambient[i] * sph->reflectance;
-    ambientComponent[i] = globalAmbientComponent[i] + light1_ambient[i]*sph->mat_ambient[i];
+    ambientComponent[i] = (global_ambient[i] * sph->reflectance) +
+                          (light1_ambient[i]*sph->mat_ambient[i]);
     diffuseComponent[i] = light1_diffuse[i]*sph->mat_diffuse[i]*dot1;
-    specularComponent[i] = max(0.0f,float(pow(dot2,sph->mat_shineness)*light1_specular[i]*sph->mat_specular[i]));
+    specularComponent[i] = max(0.0f,float(pow(dot2,shininess)*light1_specular[i]*sph->mat_specular[i]));
   }
 
-  color.r =  ambientComponent[0] + (1/decay) * (diffuseComponent[0]  + specularComponent[0]);
-  color.g =  ambientComponent[1] + (1/decay) * (diffuseComponent[1]  + specularComponent[1]);
-  color.b =  ambientComponent[2] + (1/decay) * (diffuseComponent[2]  + specularComponent[2]);
+  color.r =  ambientComponent[0] + (1.0f/decay) * (diffuseComponent[0]  + specularComponent[0]);
+  color.g =  ambientComponent[1] + (1.0f/decay) * (diffuseComponent[1]  + specularComponent[1]);
+  color.b =  ambientComponent[2] + (1.0f/decay) * (diffuseComponent[2]  + specularComponent[2]);
 	
   //cout << 1/decay << endl;
   //cout<<"RED:"<<color.r<<endl;
