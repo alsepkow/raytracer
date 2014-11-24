@@ -1,6 +1,8 @@
 #include "sphere.h"
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
+using namespace std;
 
 /**********************************************************************
  * This function intersects a ray with a given sphere 'sph'. You should
@@ -57,20 +59,46 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
  **********************************************************************/
 Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
   if(sph == NULL) return NULL;
-
+  Point tempHit = {0.0,0.0,0.0};
   Spheres *closestSphere = sph;
-  float distance1 = intersect_sphere(o,u,sph,hit);
 
+  float closestDistance = intersect_sphere(o,u,sph,&tempHit);
+  hit->x = tempHit.x;
+  hit->y = tempHit.y;
+  hit->z = tempHit.z;
+  
   float distance2;
   while(sph->next != NULL)
   {
-    distance2 = intersect_sphere(o,u,sph->next,hit);
-    if(distance1 == -1.0) distance1 = distance2;
-    else if(distance2 < distance1 && distance2 != -1.0) closestSphere = sph->next;
+    //cout << "REACHED" <<endl;
+    distance2 = intersect_sphere(o,u,sph->next,&tempHit);
+    if(distance2 >= 0.0) 
+    { 
+      //cout <<"d2: " <<distance2 << endl;
+      //cout <<"d1: " <<distance1 << endl;
+      if(distance2 < closestDistance) 
+      {
+        closestSphere = sph->next;
+        hit->x = tempHit.x;
+        hit->y = tempHit.y;
+        hit->z = tempHit.z;
+        closestDistance = distance2;
+        cout << "REACHED" << endl;
+      }
+    }
+    if(closestDistance == -1.0)
+    {
+      closestDistance = distance2;
+      closestSphere = sph->next;
+      hit->x = tempHit.x;
+      hit->y = tempHit.y;
+      hit->z = tempHit.z;
+    }
+
     sph = sph->next;
   }
 
-  if(distance1 == -1.0) return NULL;
+  if(closestDistance == -1.0) return NULL;
 	return closestSphere;
 }
 

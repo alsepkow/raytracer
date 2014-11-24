@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <GL/glut.h>
+#include <iostream>
 #include <math.h>
 #include "global.h"
 #include "sphere.h"
-
+using namespace std;
 //
 // Global variables
 //
@@ -47,18 +48,20 @@ extern int step_max;
 RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph) 
 {
   Vector lightVector = get_vec(q,light1);
+  normalize(&v);
+  Vector viewerVector = vec_scale(v,-1);//get_vec(q,eye_pos);
+  float distance = vec_len(lightVector);
   normalize(&lightVector);
-  Vector viewerVector = get_vec(q,eye_pos);
-  Vector reflectedVector = (vec_scale(surf_norm,vec_dot(lightVector,surf_norm)));
-  reflectedVector = vec_scale(reflectedVector,2);
+  Vector reflectedVector = (vec_scale(surf_norm,2*vec_dot(lightVector,surf_norm)));
   reflectedVector = vec_minus(reflectedVector,lightVector);
+  normalize(&reflectedVector);
   RGB_float color;
 
-  float distance = vec_len(v);
-  float decay = decay_a + decay_b * distance + decay_c * pow(distance,2);
+  //cout << distance << endl;
+  float decay = decay_a + decay_b * distance + decay_c * distance * distance;
 
-  float dot1 = vec_dot(lightVector,surf_norm);
-  float dot2 = vec_dot(reflectedVector,viewerVector);
+  float dot1 = max(0.0f,vec_dot(lightVector,surf_norm));
+  float dot2 = max(0.0f,float(vec_dot(reflectedVector,v)));
 
   float globalAmbientComponent[3];
   float ambientComponent[3];
@@ -68,15 +71,21 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   for(int i = 0; i < 3; i++)
   {
     globalAmbientComponent[i] = global_ambient[i] * sph->reflectance;
-    ambientComponent[i] = light1_ambient[i]*sph->mat_ambient[i];
-    diffuseComponent[i] = dot1*light1_ambient[i]*sph->mat_ambient[i];
-    specularComponent[i] = pow(dot2,sph->mat_shineness)*light1_diffuse[i]*sph->mat_diffuse[i];
+    ambientComponent[i] = globalAmbientComponent[i] + light1_ambient[i]*sph->mat_ambient[i];
+    diffuseComponent[i] = light1_diffuse[i]*sph->mat_diffuse[i]*dot1;
+    specularComponent[i] = max(0.0f,float(pow(dot2,sph->mat_shineness)*light1_specular[i]*sph->mat_specular[i]));
   }
 
-  color.r = global_ambient[0] + ambientComponent[0] + (1/decay) * (diffuseComponent[0] + specularComponent[0]);
-  color.g = global_ambient[1] + ambientComponent[1] + (1/decay) * (diffuseComponent[1] + specularComponent[1]);
-  color.b = global_ambient[2] + ambientComponent[2] + (1/decay) * (diffuseComponent[2] + specularComponent[2]);
-	return color;
+  color.r =  ambientComponent[0] + (1/decay) * (diffuseComponent[0]  + specularComponent[0]);
+  color.g =  ambientComponent[1] + (1/decay) * (diffuseComponent[1]  + specularComponent[1]);
+  color.b =  ambientComponent[2] + (1/decay) * (diffuseComponent[2]  + specularComponent[2]);
+	
+  //cout << 1/decay << endl;
+  //cout<<"RED:"<<color.r<<endl;
+  //cout<<"GREEN:"<<color.g<<endl;
+  //cout<<"BLUE"<<color.b<<endl;
+
+  return color;
 }
 
 /************************************************************************
@@ -92,6 +101,11 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
   sph = intersect_scene(o,u,scene,&hit,0);
   if(sph == NULL) color = background_clr; 
   else color = phong(hit,u,sphere_normal(hit,sph),sph);
+
+  if(color.r != 0.5 && color.g != 0.05 && color.b != 0.8)
+  {
+  //cout << "RED:" << color.r << " GREEN:"<< color.g << "  BLUE:"<< color.b << endl;
+  }
   return color;
 }
 
@@ -150,3 +164,4 @@ void ray_trace() {
     cur_pixel_pos.x = x_start;
   }
 }
+
