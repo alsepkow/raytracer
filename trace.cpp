@@ -90,9 +90,13 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   //cout<<"GREEN:"<<color.g<<endl;
   //cout<<"BLUE"<<color.b<<endl;
 
-  if(shadow_on)
+  Point dummy;
+  lightVector = vec_scale(lightVector,1);
+  if(shadow_on && intersect_scene(q,lightVector,scene,&dummy,0))
   {
-    //Do magical shadow calculations here
+    color.r =  ambientComponent[0];
+    color.g =  ambientComponent[1];
+    color.b =  ambientComponent[2];
   }
 
   return color;

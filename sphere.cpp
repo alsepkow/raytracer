@@ -13,42 +13,35 @@ using namespace std;
  *
  * If there is an intersection, the point of intersection should be
  * stored in the "hit" variable
+ *
+ * We utilize the line-sphere intersection algorithm from analytic geometry
+ * demonstrated on the wikipedia article at the following url.
+ * http://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+ *
  **********************************************************************/
 float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
-	Vector nU = u;
-  float b;
-  float distance;
-  float distance1;
-  float distance2;
-  float descriminant;
-
+  Vector nU = u;
   normalize(&nU);
   Vector originAndCenteDifference = get_vec(sph->center,o);
-  descriminant = vec_dot(nU, originAndCenteDifference);
-  descriminant *= descriminant;
-  descriminant -= pow(vec_len(originAndCenteDifference),2);
-  descriminant += pow(sph->radius,2);
-
+  float distance;
+  float a = vec_dot(nU,nU);
+  float b = 2*vec_dot(nU,originAndCenteDifference);
+  float c = vec_dot(originAndCenteDifference,originAndCenteDifference);
+  c      -= pow(sph->radius, 2);
+  
+  float descriminant = b * b - 4 *a *c;
   if(descriminant < 0) return -1.0;  //No intersections
   else 
   {
-    b = -1.0 * (vec_dot(nU,originAndCenteDifference));
-    distance1 = b + sqrt(descriminant);
-    distance2 = b - sqrt(descriminant);
+    //Solve for the smallest root
+    distance = -b - sqrt(descriminant);
+    distance = distance/(2*a);
+    if(distance < 0.0) return -1.0; //We are behind the camera
+      hit->x = o.x + distance * nU.x;
+      hit->y = o.y + distance * nU.y;
+      hit->z = o.z + distance * nU.z;
+      return distance;
   }
-
-  if(distance1 < 0.0 && distance2 < 0.0) return -1; //Both points are behind the camera
-  if(distance1 * distance2 <= 0.0) distance = fmaxf(distance1,distance2);
-  else 
-  {
-    distance = fminf(distance1,distance2);   //Poth points positive, return the closest  
-  }
-
-
-  hit->x = o.x + distance*nU.x;
-  hit->y = o.y + distance*nU.y;
-  hit->z = o.z + distance*nU.z;
-  return vec_len(get_vec(*hit,o));
 }
 
 /*********************************************************************
@@ -104,6 +97,8 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
   if(closestDistance == -1.0) return NULL;
 	return closestSphere;
 }
+
+
 
 /*****************************************************
  * This function adds a sphere into the sphere list
