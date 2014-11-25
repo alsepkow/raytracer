@@ -33,7 +33,7 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   if(descriminant < 0) return -1.0;  //No intersections
   else 
   {
-    //Solve for the smallest root
+    //Solve for the smallest root, this is the distance to our closest point
     distance = -b - sqrt(descriminant);
     distance = distance/(2*a);
     if(distance < 0.0) return -1.0; //We are behind the camera

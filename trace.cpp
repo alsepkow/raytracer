@@ -91,6 +91,9 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   //cout<<"BLUE"<<color.b<<endl;
 
   Point dummy;
+  /**Here we take advantage of our already written intersect_scene
+  *to implement shadows
+  **/
   lightVector = vec_scale(lightVector,1);
   if(shadow_on && intersect_scene(q,lightVector,scene,&dummy,0))
   {
