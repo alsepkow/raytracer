@@ -19,7 +19,7 @@ using namespace std;
  * http://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
  *
  **********************************************************************/
-float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
+float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit, bool shadow) {
   Vector nU = u;
   normalize(&nU);
   Vector originAndCenteDifference = get_vec(sph->center,o);
@@ -28,8 +28,19 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   float b = 2*vec_dot(nU,originAndCenteDifference);
   float c = vec_dot(originAndCenteDifference,originAndCenteDifference);
   c      -= pow(sph->radius, 2);
-  
   float descriminant = b * b - 4 *a *c;
+
+  //Alternative algorithm used for shadows
+  if(shadow && descriminant > 0.0)
+  {
+    //Check for two positive roots, if so we have a valid sphere intersection to cast a shadow
+    float d = sqrt(descriminant);
+    float d1 = (-b + d)/(2*a);
+    float d2 = (-b - d)/(2*a);
+    if(d1 > 0.01) return 1;
+    else return -1;
+  }
+
   if(descriminant < 0) return -1.0;  //No intersections
   else 
   {
@@ -55,7 +66,7 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
   Point tempHit = {0.0,0.0,0.0};
   Spheres *closestSphere = sph;
 
-  float closestDistance = intersect_sphere(o,u,sph,&tempHit);
+  float closestDistance = intersect_sphere(o,u,sph,&tempHit,false);
   hit->x = tempHit.x;
   hit->y = tempHit.y;
   hit->z = tempHit.z;
@@ -64,7 +75,7 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
   while(sph->next != NULL)
   {
     //cout << "REACHED" <<endl;
-    distance2 = intersect_sphere(o,u,sph->next,&tempHit);
+    distance2 = intersect_sphere(o,u,sph->next,&tempHit,false);
     if(distance2 >= 0.0) 
     { 
       //cout <<"d2: " <<distance2 << endl;
@@ -96,6 +107,20 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
 
   if(closestDistance == -1.0) return NULL;
 	return closestSphere;
+}
+
+/*********************************************************************
+ * A modified version of intersect scene for shadow calculations
+ * Returns a sphere if this point is in a shadow
+ **********************************************************************/
+Spheres *intersect_scene_shadow(Point o, Vector u, Spheres *sph, Point *hit, int i) {
+  Point dummy;
+  while(sph != NULL)
+  {
+    if(intersect_sphere(o,u,sph,&dummy,true) == 1) return sph;
+    sph = sph->next;
+  }
+  return NULL;
 }
 
 

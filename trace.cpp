@@ -56,7 +56,6 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
 
   normalize(&v);
   Vector viewerVector = vec_scale(v,-1);//get_vec(q,eye_pos);
-  normalize(&viewerVector);
 
   Vector reflectedVector = (vec_scale(surf_norm,-2.0*vec_dot(lightVector,surf_norm)));
   reflectedVector = vec_plus(reflectedVector,lightVector);
@@ -65,7 +64,6 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   float dot1 = max(0.0f,vec_dot(lightVector,surf_norm));
   float dot2 = max(0.0f,float(vec_dot(reflectedVector,v)));
 
-  //cout << distance << endl;
   float decay = decay_a + decay_b * distance + decay_c * distance * distance;
 
   float ambientComponent[3];
@@ -76,30 +74,28 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   for(int i = 0; i < 3; i++)
   {
     ambientComponent[i] = (global_ambient[i] * sph->reflectance) +
-                          (light1_ambient[i]*sph->mat_ambient[i]);
-    diffuseComponent[i] = light1_diffuse[i]*sph->mat_diffuse[i]*dot1;
+                          (light1_ambient[i] * sph->mat_ambient[i]);
+    diffuseComponent[i] = max(0.0f, light1_diffuse[i]*sph->mat_diffuse[i]*dot1);
     specularComponent[i] = max(0.0f,float(pow(dot2,shininess)*light1_specular[i]*sph->mat_specular[i]));
   }
 
-  color.r =  ambientComponent[0] + (1.0f/decay) * (diffuseComponent[0]  + specularComponent[0]);
-  color.g =  ambientComponent[1] + (1.0f/decay) * (diffuseComponent[1]  + specularComponent[1]);
-  color.b =  ambientComponent[2] + (1.0f/decay) * (diffuseComponent[2]  + specularComponent[2]);
+  color.r =  ambientComponent[0] + (1.0f/(decay)) * (diffuseComponent[0]  + specularComponent[0]);
+  color.g =  ambientComponent[1] + (1.0f/(decay)) * (diffuseComponent[1]  + specularComponent[1]);
+  color.b =  ambientComponent[2] + (1.0f/(decay)) * (diffuseComponent[2]  + specularComponent[2]);
 	
-  //cout << 1/decay << endl;
-  //cout<<"RED:"<<color.r<<endl;
-  //cout<<"GREEN:"<<color.g<<endl;
-  //cout<<"BLUE"<<color.b<<endl;
-
   Point dummy;
   /**Here we take advantage of our already written intersect_scene
   *to implement shadows
   **/
-  lightVector = vec_scale(lightVector,1);
-  if(shadow_on && intersect_scene(q,lightVector,scene,&dummy,0))
+  //lightVector = vec_scale(lightVector,1);
+  if(shadow_on && intersect_scene_shadow(q,lightVector,scene,&dummy,0) != NULL)
   {
-    color.r =  ambientComponent[0];
-    color.g =  ambientComponent[1];
-    color.b =  ambientComponent[2];
+  	//Set the color to only the ambient component (It is in a shadow)
+    color.r =  ambientComponent[0] + .5;
+    color.g =  ambientComponent[1] + .5;
+    color.b =  ambientComponent[2] + .5;
+
+    cout << color.r  << " " << color.g << " " << color.b << endl;
   }
 
   return color;
