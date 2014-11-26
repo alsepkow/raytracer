@@ -4,6 +4,11 @@
 #include <math.h>
 #include "global.h"
 #include "sphere.h"
+
+#define boardLeftBound  -6
+#define boardRightBound  6
+#define boardFrontBound -1
+#define boardBackBound  -10
 using namespace std;
 //
 // Global variables
@@ -40,6 +45,7 @@ extern float decay_c;
 extern int shadow_on;
 extern int reflect_on;
 extern int step_max;
+extern int board_on;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -96,52 +102,40 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   }
 
   return color;
-
-
-
-// RGB_float color;
-	
-// 	Vector light_v = get_vec(q, light1);
-// 	float d = vec_len(light_v);
-// 	normalize(&light_v);
-	
-// 	float ambientC[3];
-// 	for(int i = 0; i<3; i++)
-// 		ambientC[i] = max(0.0f, (light1_ambient[i]* sph->mat_ambient[i]) + (global_ambient[i]* sph->reflectance));
-
-// 	//Calculate the coeff 1/ a + bd + cd^2
-// 	float coeff = 1.0f / (decay_a + decay_b*d + decay_c*d*d);
-	
-// 	//Calculate the diffuse factor of the object relative to the light
-// 	float dot = max(0.0f, vec_dot(surf_norm, light_v));
-// 	float diffuseC[3];
-// 	for(int i = 0; i<3; i++)
-// 		diffuseC[i] = light1_diffuse[i] * sph->mat_diffuse[i] * dot;
-		
-// 	//Calculate the angle between the normal and light vector then creates the reflect vector
-// 	float N = sph->mat_shineness;
-// 	float cos_theta = max(0.0f, vec_dot(surf_norm, light_v));
-// 	Vector reflect_vec = vec_plus(light_v, vec_scale(surf_norm, -2 * cos_theta));
-// 	normalize(&reflect_vec);
-// 	Vector V = vec_scale(v, -1.0f);
-// 	normalize(&V);
-	
-// 	//Calculate the Specular factor of the object relative to the light
-// 	float specularC[3];
-// 	for(int i = 0; i<3; i++)
-// 		specularC[i] = float(light1_specular[i]*sph->mat_specular[i]*pow(vec_dot(V, reflect_vec), N));
-	
-// 	//Calcuate the total color of the pixel
-// 	color.r = ambientC[0] + coeff*(diffuseC[0]+specularC[0]);
-// 	color.g = ambientC[1] + coeff*(diffuseC[1]+specularC[1]); 
-// 	color.b = ambientC[2] + coeff*(diffuseC[2]+specularC[2]);
-	
-	
-// 	return color;
-
-
-
 }
+
+/************************************************************************
+ * Here we implement a line-plane intersection formula
+ * The general form of the mathematical solution comes from the following Wikipedia page
+ * http://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
+ * Origin is the viewers eye
+ * Ray is a vector from the viewers eye to the current pixel
+ * Returns true of the board is intersected
+ ************************************************************************/
+bool intersect_board(Point origin, Vector ray, Point *hit) 
+{
+	Point p0= {0.0,4.0,2.0}; //Arbtrary point on our checkerboard plane
+	Vector boardNormal = {0.0,1.0,0.0};
+	float term1 = vec_dot(get_vec(origin, p0),boardNormal); 
+	float lDotN = vec_dot(ray,boardNormal);
+	float distance;
+
+	if(lDotN != 0 && term1 != 0)
+	{
+		//cout << "HERE" << endl;
+		distance = -1 * term1/lDotN;
+		if(distance > 0.0) 
+		{
+			hit->x = origin.x + distance*ray.x;
+			hit->y = origin.y + distance*ray.y;
+			hit->z = origin.y + distance*ray.z;
+			return true;
+		}
+	}
+	return false;
+}
+
+
 
 /************************************************************************
  * This is the recursive ray tracer - you need to implement this!
@@ -151,12 +145,29 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
 {
   Spheres *sph = NULL;
   Point hit;
+  Point boardHit;
   RGB_float color;
   Vector sphereHitNormal;
+  bool boardIntersection = intersect_board(o,u,&boardHit);
 
-  sph = intersect_scene(o,u,scene,&hit,0);
-  if(sph == NULL) color = background_clr; 
-  else 
+  sph = intersect_scene(o,u,scene,&hit,0);  
+  if(sph == NULL) color = background_clr;
+
+  if(board_on && boardIntersection)
+  {
+  	//cout << "BOARD_ON" << endl;
+  	//color the point on the board
+  	int X = int(boardHit.x + 10) -10;
+  	int Z = int(boardHit.z + 10) -10;
+
+  	if(X < boardLeftBound|| X >= boardRightBound || 
+    Z >= boardFrontBound|| Z < boardBackBound) 
+    {color = background_clr;}
+    else if(X%2 == 0 && Z%2 == 0 || X%2 != 0 && Z%2 != 0) {color = null_clr;}
+	  else {color = {1.0,1.0,1.0};}
+  }
+
+  if(sph != NULL)  
   {
 	  sphereHitNormal = sphere_normal(hit,sph);
 	  color = phong(hit,u,sphereHitNormal,sph);
@@ -229,5 +240,7 @@ void ray_trace() {
     cur_pixel_pos.y += y_grid_size;
     cur_pixel_pos.x = x_start;
   }
+
+
 }
 

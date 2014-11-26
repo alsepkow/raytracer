@@ -80,6 +80,7 @@ int step_max = 1;
 // a flag to indicate whether you want to have shadows
 int shadow_on = 0;
 int reflect_on = 0;
+int board_on = 0;
 
 
 // OpenGL
@@ -225,7 +226,8 @@ int main( int argc, char **argv )
 	for(int i = 3; i < argc; i++)
 	{
 		if (strcmp(argv[i], "-s") == 0)	shadow_on = 1;
-		if (strcmp(argv[i], "-s") == 0)	reflect_on = 1;
+		if (strcmp(argv[i], "-l") == 0)	reflect_on = 1;
+		if (strcmp(argv[i], "-c") == 0)	board_on = 1;
 	}
 
 	//
