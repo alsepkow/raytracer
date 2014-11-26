@@ -58,11 +58,11 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   normalize(&v);
   Vector viewerVector = vec_scale(v,-1);//get_vec(q,eye_pos);
 
-  Vector reflectedVector = (vec_scale(surf_norm,-2.0*vec_dot(lightVector,surf_norm)));
+  Vector reflectedVector = (vec_scale(surf_norm,-2.0*max(0.0f,vec_dot(lightVector,surf_norm))));
   reflectedVector = vec_plus(reflectedVector,lightVector);
   normalize(&reflectedVector);
 
-  float dot1 = max(0.0f,vec_dot(lightVector,surf_norm));
+  float dot1 = max(0.0f,vec_dot(surf_norm, lightVector));
   float dot2 = float(vec_dot(reflectedVector,v));
 
   float decay = decay_a + decay_b * distance + decay_c * distance * distance;
@@ -96,6 +96,51 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   }
 
   return color;
+
+
+
+// RGB_float color;
+	
+// 	Vector light_v = get_vec(q, light1);
+// 	float d = vec_len(light_v);
+// 	normalize(&light_v);
+	
+// 	float ambientC[3];
+// 	for(int i = 0; i<3; i++)
+// 		ambientC[i] = max(0.0f, (light1_ambient[i]* sph->mat_ambient[i]) + (global_ambient[i]* sph->reflectance));
+
+// 	//Calculate the coeff 1/ a + bd + cd^2
+// 	float coeff = 1.0f / (decay_a + decay_b*d + decay_c*d*d);
+	
+// 	//Calculate the diffuse factor of the object relative to the light
+// 	float dot = max(0.0f, vec_dot(surf_norm, light_v));
+// 	float diffuseC[3];
+// 	for(int i = 0; i<3; i++)
+// 		diffuseC[i] = light1_diffuse[i] * sph->mat_diffuse[i] * dot;
+		
+// 	//Calculate the angle between the normal and light vector then creates the reflect vector
+// 	float N = sph->mat_shineness;
+// 	float cos_theta = max(0.0f, vec_dot(surf_norm, light_v));
+// 	Vector reflect_vec = vec_plus(light_v, vec_scale(surf_norm, -2 * cos_theta));
+// 	normalize(&reflect_vec);
+// 	Vector V = vec_scale(v, -1.0f);
+// 	normalize(&V);
+	
+// 	//Calculate the Specular factor of the object relative to the light
+// 	float specularC[3];
+// 	for(int i = 0; i<3; i++)
+// 		specularC[i] = float(light1_specular[i]*sph->mat_specular[i]*pow(vec_dot(V, reflect_vec), N));
+	
+// 	//Calcuate the total color of the pixel
+// 	color.r = ambientC[0] + coeff*(diffuseC[0]+specularC[0]);
+// 	color.g = ambientC[1] + coeff*(diffuseC[1]+specularC[1]); 
+// 	color.b = ambientC[2] + coeff*(diffuseC[2]+specularC[2]);
+	
+	
+// 	return color;
+
+
+
 }
 
 /************************************************************************
