@@ -38,6 +38,7 @@ extern float decay_b;
 extern float decay_c;
 
 extern int shadow_on;
+extern int reflect_on;
 extern int step_max;
 
 /////////////////////////////////////////////////////////////////////
@@ -62,7 +63,7 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   normalize(&reflectedVector);
 
   float dot1 = max(0.0f,vec_dot(lightVector,surf_norm));
-  float dot2 = max(0.0f,float(vec_dot(reflectedVector,v)));
+  float dot2 = float(vec_dot(reflectedVector,v));
 
   float decay = decay_a + decay_b * distance + decay_c * distance * distance;
 
@@ -84,18 +85,14 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
   color.b =  ambientComponent[2] + (1.0f/(decay)) * (diffuseComponent[2]  + specularComponent[2]);
 	
   Point dummy;
-  /**Here we take advantage of our already written intersect_scene
-  *to implement shadows
-  **/
-  //lightVector = vec_scale(lightVector,1);
   if(shadow_on && intersect_scene_shadow(q,lightVector,scene,&dummy,0) != NULL)
   {
   	//Set the color to only the ambient component (It is in a shadow)
-    color.r =  ambientComponent[0] + .5;
-    color.g =  ambientComponent[1] + .5;
-    color.b =  ambientComponent[2] + .5;
+    color.r =  ambientComponent[0];
+    color.g =  ambientComponent[1];
+    color.b =  ambientComponent[2];
 
-    cout << color.r  << " " << color.g << " " << color.b << endl;
+    //cout << color.r  << " " << color.g << " " << color.b << endl;
   }
 
   return color;
@@ -110,15 +107,26 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
   Spheres *sph = NULL;
   Point hit;
   RGB_float color;
+  Vector sphereHitNormal;
 
   sph = intersect_scene(o,u,scene,&hit,0);
   if(sph == NULL) color = background_clr; 
-  else color = phong(hit,u,sphere_normal(hit,sph),sph);
-
-  if(color.r != 0.5 && color.g != 0.05 && color.b != 0.8)
+  else 
   {
-  //cout << "RED:" << color.r << " GREEN:"<< color.g << "  BLUE:"<< color.b << endl;
+	  sphereHitNormal = sphere_normal(hit,sph);
+	  color = phong(hit,u,sphereHitNormal,sph);
   }
+
+  if(sph != NULL && reflect_on && recursiveSteps > 0)
+  {
+  	Vector viewerVector = get_vec(hit, eye_pos);
+  	normalize(&viewerVector);
+  	Vector reflectedVector = vec_plus(u, vec_scale(sphereHitNormal, -2 * vec_dot(sphereHitNormal,u)));
+  	RGB_float iReflect = recursive_ray_trace(hit,reflectedVector,recursiveSteps - 1);
+  	color = clr_add(color, clr_scale(iReflect,sph->reflectance));
+    recursiveSteps -= 1;
+  }
+
   return color;
 }
 
@@ -152,7 +160,7 @@ void ray_trace() {
       //
       // You need to change this!!!
       //
-      ret_color = recursive_ray_trace(eye_pos, ray,0);
+      ret_color = recursive_ray_trace(eye_pos, ray,step_max);
       //ret_color = background_clr; // just background for now
 
       // Parallel rays can be cast instead using below

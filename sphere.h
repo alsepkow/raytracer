@@ -22,6 +22,8 @@ typedef struct sphere {
 
 // intersect ray with sphere
 Spheres *intersect_scene(Point, Vector, Spheres *, Point *, int);
+// intersect ray with sphere, a modified version for use with shadows
+Spheres *intersect_scene_shadow(Point, Vector, Spheres *, Point *, int);
 // return the unit normal at a point on sphere
 Vector sphere_normal(Point, Spheres *);
 // add a sphere to the sphere list

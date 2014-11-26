@@ -111,7 +111,8 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int i) {
 
 /*********************************************************************
  * A modified version of intersect scene for shadow calculations
- * Returns a sphere if this point is in a shadow
+ * Returns a sphere if this point is in a shadow 
+ * This occurs precisely when intersect_sphere finds TWO roots
  **********************************************************************/
 Spheres *intersect_scene_shadow(Point o, Vector u, Spheres *sph, Point *hit, int i) {
   Point dummy;
