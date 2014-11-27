@@ -124,6 +124,7 @@ bool intersect_board(Point origin, Vector ray, Point *hit)
 	{
 		//cout << "HERE" << endl;
 		distance = -1 * term1/lDotN;
+		//If distance is positive, we have a good hit, assign hit
 		if(distance > 0.0) 
 		{
 			hit->x = origin.x + distance*ray.x;
@@ -159,12 +160,31 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
   	//color the point on the board
   	int X = int(boardHit.x + 10) -10;
   	int Z = int(boardHit.z + 10) -10;
+  	bool inBoard = 1;
 
   	if(X < boardLeftBound|| X >= boardRightBound || 
     Z >= boardFrontBound|| Z < boardBackBound) 
-    {color = background_clr;}
+    {
+    	color = background_clr;
+    	inBoard = 0;
+
+    }
     else if(X%2 == 0 && Z%2 == 0 || X%2 != 0 && Z%2 != 0) {color = null_clr;}
-	  else {color = {1.0,1.0,1.0};}
+	else {color = {1.0,1.0,1.0};}
+
+	Point dummy;
+
+	Vector bRay = get_vec(boardHit, light1);
+  	if(shadow_on && intersect_scene_shadow(boardHit,bRay,scene,&dummy,0) != NULL)
+  	{
+  		if(inBoard)
+  		{
+  			color.r =  color.r * 0.5;
+    		color.g =  color.g * 0.5;
+    		color.b =  color.b * 0.5;
+  		}
+  	}
+
   }
 
   if(sph != NULL)  
