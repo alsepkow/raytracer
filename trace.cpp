@@ -7,8 +7,12 @@
 
 #define boardLeftBound  -6
 #define boardRightBound  6
-#define boardFrontBound -1
+#define boardFrontBound -3.5
 #define boardBackBound  -10
+
+Point p0= {0.0,4.0,2.0}; //Arbtrary point on our checkerboard plane
+Vector boardNormal = {0.0,-2.0,0.0}; //Board normal
+
 using namespace std;
 //
 // Global variables
@@ -114,8 +118,6 @@ RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph)
  ************************************************************************/
 bool intersect_board(Point origin, Vector ray, Point *hit) 
 {
-	Point p0= {0.0,4.0,2.0}; //Arbtrary point on our checkerboard plane
-	Vector boardNormal = {0.0,1.0,0.0};
 	float term1 = vec_dot(get_vec(origin, p0),boardNormal); 
 	float lDotN = vec_dot(ray,boardNormal);
 	float distance;
@@ -169,6 +171,7 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
     	inBoard = 0;
 
     }
+
     else if(X%2 == 0 && Z%2 == 0 || X%2 != 0 && Z%2 != 0) {color = null_clr;}
 	else {color = {1.0,1.0,1.0};}
 
@@ -183,6 +186,15 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
     		color.g =  color.g * 0.5;
     		color.b =  color.b * 0.5;
   		}
+  	}
+
+  	if(reflect_on && recursiveSteps > 0 && inBoard)
+  	{
+  		Vector tempNormal = boardNormal;
+  		//normalize(&tempNormal);
+  		Vector reflectedVector = vec_plus(u, vec_scale(tempNormal, -2 * vec_dot(tempNormal,u)));
+  		color = clr_add(color, clr_scale(recursive_ray_trace(boardHit, reflectedVector, recursiveSteps -1), 0.5));
+  		recursiveSteps -= 1;
   	}
 
   }
