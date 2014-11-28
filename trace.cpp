@@ -193,7 +193,9 @@ RGB_float recursive_ray_trace(Point o, Vector u,int recursiveSteps)
   		Vector tempNormal = boardNormal;
   		//normalize(&tempNormal);
   		Vector reflectedVector = vec_plus(u, vec_scale(tempNormal, -2 * vec_dot(tempNormal,u)));
-  		color = clr_add(color, clr_scale(recursive_ray_trace(boardHit, reflectedVector, recursiveSteps -1), 0.5));
+  		//color = clr_add(color, clr_scale(recursive_ray_trace(boardHit, reflectedVector, recursiveSteps -1), 0.5));
+  		RGB_float iReflect = recursive_ray_trace(boardHit,reflectedVector,recursiveSteps - 1);
+  		color = clr_add(color, clr_scale(iReflect,0.5));
   		recursiveSteps -= 1;
   	}
 
